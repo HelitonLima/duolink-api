@@ -1,16 +1,39 @@
-/* import { userInterface } from './../interfaces/userInterface'
-import { auth, firestore } from '../firebase/firebaseServices'
-import { loginInterface } from '../interfaces/loginInterface'
-import bcrypt from 'bcrypt' */
-
+import { userInterface } from './../interfaces/userInterface'
+import { auth, firestore } from '../connections/firebase'
 import { Request, Response } from 'express'
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth'
+import { addDoc, collection, setDoc } from 'firebase/firestore'
 
 class AuthController {
-  public async teste (req: Request, res: Response): Promise<Response> {
-    return res.status(200).json({ json: 'teste1' })
+  public async createUser (req: Request, res: Response): Promise<Response> {
+    try {
+      const body: userInterface = req.body
+      const userAuth = await createUserWithEmailAndPassword(
+        auth,
+        body.email,
+        body.password
+      )
+      const usercollection = collection(firestore, 'user')
+      const userDoc = await addDoc(usercollection, { id: userAuth.user.uid })
+      setDoc(userDoc, body)
+
+      return res.status(200).json({ auth: userAuth, user: body })
+    } catch (error) {
+      return res.status(500).json(error)
+    }
   }
 
-/*   public async login (req: Request, res: Response): Promise<Response> {
+  public async login (req: Request, res: Response): Promise<Response> {
+    try {
+      const login = await signInWithEmailAndPassword(auth, req.body.email, req.body.password)
+
+      return res.status(200).json(login)
+    } catch (error) {
+      return res.status(500).json(error)
+    }
+  }
+
+  /*   public async login (req: Request, res: Response): Promise<Response> {
     try {
       console.log('Init login: ' + JSON.stringify(req.body))
       const response: any = await auth().signInWithEmailAndPassword(req.body.email, req.body.password)

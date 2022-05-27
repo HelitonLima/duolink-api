@@ -3,6 +3,8 @@ import AuthController from '../controllers/authController'
 
 const routes = Router()
 
-routes.get('/teste', AuthController.teste)
+routes.post('/user', AuthController.createUser)
+
+routes.post('/login', AuthController.login)
 
 export default routes
