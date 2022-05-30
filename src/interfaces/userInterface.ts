@@ -1,3 +1,5 @@
+import { summonerInterface } from "./summonerInterface"
+
 interface roleInterface {
     icon: string,
     name: string
@@ -11,4 +13,5 @@ export interface userInterface{
     nickname: string
     playRole: roleInterface[]
     searchRole: roleInterface[]
+    soloqData?: summonerInterface
 }
