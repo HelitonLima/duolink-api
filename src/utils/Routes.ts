@@ -8,11 +8,13 @@ const prevUrl = '/duo-finder-api'
 
 routes.post(prevUrl + '/user', AuthController.createUser)
 
+routes.put(prevUrl + '/user', AuthController.updateUser)
+
 routes.post(prevUrl + '/login', AuthController.login)
 
-routes.post(prevUrl + '/duo', DuoController.duo)
-
 routes.get(prevUrl + '/key', AuthController.getRiotApiKey)
+
+routes.post(prevUrl + '/duo', DuoController.duo)
 
 routes.get(prevUrl + '/roles', RoleController.getRoles)
 
