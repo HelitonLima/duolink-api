@@ -10,6 +10,8 @@ import { summonerInterface } from '../interfaces/summonerInterface'
 const getByName = 'https://br1.api.riotgames.com/lol/summoner/v4/summoners/by-name/'
 // Url de referência da Riot que retorna mais alguns dados de perfil com base no id do jogador
 const getById = 'https://br1.api.riotgames.com/lol/league/v4/entries/by-summoner/'
+// Url de referência da Riot que retorna todos campeões
+const getChampions = 'http://ddragon.leagueoflegends.com/cdn/13.11.1/data/en_US/champion.json'
 
 class AuthController {
   public async createUser (req: Request, res: Response): Promise<Response> {
@@ -98,6 +100,27 @@ class AuthController {
     }
   }
 
+  public async getChampions (req: Request, res: Response): Promise<Response> {
+    try {
+      const riotResponse = await fetch(getChampions, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json'
+        }
+      })
+      const resRiot = await riotResponse.json()
+      const champions = []
+
+      for (const propertyName in resRiot.data) {
+        champions.push(propertyName)
+      }
+
+      return res.status(200).json(champions)
+    } catch (error) {
+      return res.status(500).json(error)
+    }
+  }
+
   public async updateUser (req: Request, res: Response): Promise<Response> {
     try {
       const body: userInterface = req.body
@@ -135,6 +158,17 @@ class AuthController {
       await setDoc(doc(firestore, 'user', body.id), body)
 
       return res.status(200).json({ user: body })
+    } catch (error) {
+      return res.status(500).json(error)
+    }
+  }
+
+  public async getUserById (req: Request, res: Response): Promise<Response> {
+    try {
+      const id = req.query.idUser
+      const user = await getDoc(doc(firestore, 'user', String(id)))
+
+      return res.status(200).json({ user: user.data() })
     } catch (error) {
       return res.status(500).json(error)
     }

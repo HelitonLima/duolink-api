@@ -4,6 +4,7 @@ import routes from './utils/Routes'
 import { Server } from 'socket.io'
 import { userInterface } from './interfaces/userInterface'
 import { notificationInterface } from './interfaces/notificationInterface'
+import { chatInterface, chatMessageInterface } from './interfaces/chatInterface'
 
 export const io = new Server(3000, {
   cors: {
@@ -12,6 +13,7 @@ export const io = new Server(3000, {
 })
 const posts = []
 const notifications: notificationInterface[] = []
+const chats: chatInterface[] = []
 
 io.on('connection', async (socket) => {
   console.log('a user connected')
@@ -26,13 +28,57 @@ io.on('connection', async (socket) => {
     io.emit('posts', posts)
   })
 
+  socket.on('create chat', (users: string[]) => {
+    const chatAlreadyCreated = () => chats.some(c => {
+      let chatCreated = false
+
+      if (c.users.some(u => u === users[0]) && c.users.some(u => u === users[1])) {
+        chatCreated = true
+      }
+
+      return chatCreated
+    })
+
+    if (!chatAlreadyCreated()) {
+      chats.push({ users, messages: [] })
+    }
+
+    io.emit('get chat')
+  })
+
+  socket.on('get chat', (users: string[]) => {
+    const chatFiltered = chats.find(c =>
+      c.users.some(u => u === users[0]) &&
+      c.users.some(u => u === users[1]))
+
+    socket.emit('chat', chatFiltered)
+  })
+
+  socket.on('send msg', (msg: chatMessageInterface) => {
+    const chatFiltered = chats.find(c =>
+      c.users.some(u => u === msg.senderIdUser) &&
+        c.users.some(u => u === msg.reciverIdUser))
+
+    chatFiltered.messages.push(msg)
+
+    io.emit('get chat')
+  })
+
   socket.on('notifications', (res: { notification: notificationInterface, user: userInterface }) => {
-    if (notifications.some(n => n.reciverId === res.notification.reciverId && n.senderId === res.notification.senderId)) {
-      socket.emit('notification already created')
+    if (notifications.find(n =>
+      n.reciverId === res.notification.reciverId &&
+        n.senderId === res.notification.senderId &&
+        res.notification.type === 'INVITE'
+    )?.declined) {
+      socket.emit('notification declined')
     } else {
       notifications.push(res.notification)
 
       io.emit('get notifications')
+
+      if (res.notification.type === 'INVITE' && res.notification.accpeted !== true) {
+        socket.emit('notification sended')
+      }
     }
   })
 
@@ -61,6 +107,19 @@ io.on('connection', async (socket) => {
 
     notification.accpeted = true
     notification.seen = true
+
+    socket.emit('get notifications')
+  })
+
+  socket.on('deny invite notification', (idNotification: string) => {
+    notifications.map(n => {
+      if (n.id === idNotification) {
+        n.declined = true
+        n.seen = true
+      }
+
+      return n
+    })
 
     socket.emit('get notifications')
   })
