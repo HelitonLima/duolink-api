@@ -129,31 +129,6 @@ class DuoController {
       const wheres: any = []
       const users = []
 
-      if (body.nickname) {
-        wheres.push(whereNick)
-      }
-
-      if (body.tiers.length > 0) {
-        wheres.push(whereTier)
-      }
-
-      if (body.roles.length > 0) {
-        wheres.push(whereRoles)
-      }
-
-      const userQuery = query(userCollection, ...wheres)
-      const content = await getDocs(userQuery)
-
-      if (!content.empty) {
-        content.forEach(data => {
-          const user: userInterface = data.data() as any
-
-          if (user.id !== body.idUser) {
-            users.push(user)
-          }
-        })
-      }
-
       if (body.champions.length > 0) {
         for (const c of body.champions) {
           const whereChampions = where('favoritesChamps', 'array-contains', c)
@@ -183,6 +158,31 @@ class DuoController {
               }
             })
           }
+        }
+      } else {
+        if (body.nickname) {
+          wheres.push(whereNick)
+        }
+
+        if (body.tiers.length > 0) {
+          wheres.push(whereTier)
+        }
+
+        if (body.roles.length > 0) {
+          wheres.push(whereRoles)
+        }
+
+        const userQuery = query(userCollection, ...wheres)
+        const content = await getDocs(userQuery)
+
+        if (!content.empty) {
+          content.forEach(data => {
+            const user: userInterface = data.data() as any
+
+            if (user.id !== body.idUser) {
+              users.push(user)
+            }
+          })
         }
       }
 
